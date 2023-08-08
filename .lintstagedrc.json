@@ -1,4 +1,8 @@
 {
-    "*.ts": ["eslint", "prettier --ignore-unknown --write"],
+    "*.ts": [
+        "eslint",
+        "vitest related --run --passWithNoTests",
+        "prettier --ignore-unknown --write"
+    ],
     "*.{json,md}": "prettier --ignore-unknown --write"
 }
