@@ -4,6 +4,7 @@
         "bierner.github-markdown-preview",
         "darkriszty.markdown-table-prettify",
         "esbenp.prettier-vscode",
-        "editorconfig.editorconfig"
+        "editorconfig.editorconfig",
+        "zixuanchen.vitest-explorer"
     ]
 }

@@ -3,5 +3,7 @@
     "editor.formatOnPaste": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "files.eol": "\n",
-    "files.insertFinalNewline": true
+    "files.insertFinalNewline": true,
+    "vitest.enable": true,
+    "vitest.commandLine": "npx vitest"
 }
