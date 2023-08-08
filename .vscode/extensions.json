@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "bierner.github-markdown-preview",
+        "darkriszty.markdown-table-prettify",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig"
+    ]
+}

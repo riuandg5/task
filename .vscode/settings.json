@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.eol": "\n",
+    "files.insertFinalNewline": true
+}

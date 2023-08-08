@@ -3,5 +3,12 @@
     "version": "1.0.0",
     "description": "A utility to create tasks, group tasks, and execute.",
     "author": "Rishu Anand <riuandg5@gmail.com>",
-    "license": "MIT"
+    "license": "MIT",
+    "scripts": {
+        "format": "prettier ./ --write",
+        "format:check": "prettier ./ --check"
+    },
+    "devDependencies": {
+        "prettier": "3.0.1"
+    }
 }
