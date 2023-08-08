@@ -5,10 +5,13 @@
     "author": "Rishu Anand <riuandg5@gmail.com>",
     "license": "MIT",
     "scripts": {
+        "prepare": "husky install",
         "format": "prettier ./ --write",
         "format:check": "prettier ./ --check"
     },
     "devDependencies": {
+        "husky": "8.0.3",
+        "lint-staged": "13.2.3",
         "prettier": "3.0.1"
     }
 }
