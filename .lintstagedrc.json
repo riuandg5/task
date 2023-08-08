@@ -1,3 +1,4 @@
 {
+    "*.ts": ["eslint", "prettier --ignore-unknown --write"],
     "*.{json,md}": "prettier --ignore-unknown --write"
 }
