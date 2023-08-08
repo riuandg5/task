@@ -1,0 +1,43 @@
+{
+    "include": ["./src/**/*.ts"], // files to include in the transpilation
+    "exclude": ["./src/**/*.test.ts"], // files to exclude in the transpilation
+    "compilerOptions": {
+        "rootDir": "./src/", // dir tree to maintin in "outDir";
+        "outDir": "./lib/", // dir for tranpiled js files
+
+        "target": "ES2022", // format of js transpiled from ts; lower it to support more backward compatibility
+        "lib": ["ES2022"], // libraries to include while type checking; like you can include dom
+
+        "module": "NodeNext", // type of module used in transpiled js; "NodeNext" allows using different file extensions for js; use "type" as "module" in package.json with "NodeNext"; .cts transpiles to .cjs
+        "moduleResolution": "NodeNext", // module resolution strategy; "NodeNext" allows both ES imports and CommonJS require
+        "esModuleInterop": true, // do not treat cjs module imports same as es module imports; enabling needs "allowSyntheticDefaultImports" to also be enabled for backward compatibility
+        "allowSyntheticDefaultImports": true, // enable using "import x from y" when there is no default export in y
+        "forceConsistentCasingInFileNames": true, // make imports case sensitive
+
+        // "resolveJsonModule": true, // enable importing json files
+        // "allowJs": true, // enable importing js files
+        // "checkJs": false, // if "allowJs" is enabled, disable checking of js files
+
+        "removeComments": true, // remove comments from tranpiled js files
+        "declaration": true, // generate .d.ts, declartion files
+        // "declarationMap": true, // generates source map for .d.ts files which map back to the original ts source file
+        "skipLibCheck": true, // skip type checking all .d.ts files
+        // "sourceMap": true, // generates .js.map, sourcemap files
+        // "inlineSourceMap": true, // includes sourcemap in js file instead of seperate .js.map file
+
+        // "emitDeclarationOnly": true, // generate only .d.ts file and no js files; enable it when using babel to transpile ts files
+        // "noEmit": true, // disables tranpilation; for using typescript for type checking only
+
+        "strict": true, // enable all strict type-checking options
+        "noUnusedLocals": true, // enable error reporting when local variables aren't read
+        "noUnusedParameters": true, // raise an error when a function parameter isn't read
+        "exactOptionalPropertyTypes": true, // interpret optional property types as written, rather than adding 'undefined'
+        "noImplicitReturns": true, // enable error reporting for codepaths that do not explicitly return in a function
+        "noFallthroughCasesInSwitch": true, // enable error reporting for fallthrough cases in switch statements
+        "noUncheckedIndexedAccess": true, // add 'undefined' to a type when accessed using an index
+        "noImplicitOverride": true, // ensure overriding members in derived classes are marked with an override modifier
+        "noPropertyAccessFromIndexSignature": true, // enforces using indexed accessors for keys declared using an indexed type
+        "allowUnusedLabels": false, // enable error reporting for unused labels
+        "allowUnreachableCode": false // enable error reporting for unreachable code
+    }
+}

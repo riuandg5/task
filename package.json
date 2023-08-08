@@ -4,14 +4,28 @@
     "description": "A utility to create tasks, group tasks, and execute.",
     "author": "Rishu Anand <riuandg5@gmail.com>",
     "license": "MIT",
+    "main": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "type": "module",
     "scripts": {
         "prepare": "husky install",
         "format": "prettier ./ --write",
-        "format:check": "prettier ./ --check"
+        "format:check": "prettier ./ --check",
+        "compile": "tsc",
+        "compile:watch": "tsc --watch",
+        "clean": "rimraf ./lib/",
+        "build": "npm run clean && npm run compile",
+        "build:dev": "npm run compile:watch"
     },
     "devDependencies": {
         "husky": "8.0.3",
         "lint-staged": "13.2.3",
-        "prettier": "3.0.1"
+        "prettier": "3.0.1",
+        "rimraf": "5.0.1",
+        "typescript": "5.1.6"
+    },
+    "engines": {
+        "npm": ">=9.0.0",
+        "node": ">=18.0.0"
     }
 }
