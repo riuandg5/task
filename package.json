@@ -1,5 +1,5 @@
 {
-    "name": "@riuandg5/task",
+    "name": "@riuandg5/task-execute",
     "version": "1.0.0",
     "description": "A utility to create tasks, group tasks, and execute.",
     "author": "Rishu Anand <riuandg5@gmail.com>",
@@ -12,11 +12,11 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/riuandg5/task.git"
+        "url": "git+https://github.com/riuandg5/task-execute.git"
     },
-    "homepage": "https://github.com/riuandg5/task",
+    "homepage": "https://github.com/riuandg5/task-execute",
     "bugs": {
-        "url": "https://github.com/riuandg5/task/issues"
+        "url": "https://github.com/riuandg5/task-execute/issues"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org/",
