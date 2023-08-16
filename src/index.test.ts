@@ -85,6 +85,18 @@ describe("Task class", () => {
                 ).toThrowError("no worker set and no fallback worker provided");
             });
 
+            test("throws with throwing worker", () => {
+                expect(() =>
+                    new Task({
+                        worker: (a: number, b: number) => {
+                            throw new Error("error from worker");
+                            return a + b;
+                        },
+                        workerParams: [1, 2],
+                    }).execute(),
+                ).toThrowError("error from worker");
+            });
+
             test("returns with defined worker and workerParams", () => {
                 expect(
                     new Task({
@@ -128,6 +140,17 @@ describe("Task class", () => {
                 ).toThrowError("no worker set and no fallback worker provided");
             });
 
+            test("throws with correct fallback which throws error", () => {
+                expect(() =>
+                    new Task({ workerParams: [1, 2] }).execute({
+                        worker: (a: number, b: number) => {
+                            throw new Error("error from fallback worker");
+                            return a + b;
+                        },
+                    }),
+                ).toThrowError("error from fallback worker");
+            });
+
             test("returns with correct fallabck and undefined worker or workerParams", () => {
                 expect(
                     new Task<number[], number>().execute({
@@ -149,6 +172,21 @@ describe("Task class", () => {
                         worker: (c, d) => c * d,
                     }),
                 ).toBe(2);
+            });
+
+            test("throws with throwing worker", () => {
+                expect(() =>
+                    new Task({
+                        worker: (a: number, b: number) => {
+                            throw new Error("error from worker");
+                            return a + b;
+                        },
+                        workerParams: [1, 2],
+                    }).execute({
+                        worker: (c, d) => c * d,
+                        workerParams: [4, 5],
+                    }),
+                ).toThrowError("error from worker");
             });
 
             test("returns with defined worker and workerParams", () => {
