@@ -10,20 +10,20 @@ class Task<T extends unknown[], R> {
         this.#worker = worker;
     }
 
-    getWorker(): Worker<T, R> | undefined {
+    get worker() {
         return this.#worker;
     }
 
-    getWorkerParams(): T {
+    get workerParams() {
         return this.#workerParams;
     }
 
-    getResult(): R | undefined {
+    get result() {
         return this.#result;
     }
 
-    setWorker(worker: Worker<T, R>): void {
-        this.#worker = worker;
+    set worker(func: Worker<T, R> | undefined) {
+        this.#worker = func;
         this.#result = undefined;
     }
 
