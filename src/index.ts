@@ -38,12 +38,28 @@ class Task<T extends unknown[], R> {
         this.#result = undefined;
     }
 
-    execute() {
-        if (this.#worker && this.#workerParams) {
-            this.#result = this.#worker(...this.#workerParams);
-            return this.#result;
+    execute(fbConfig: TaskConfigI<T, R> = {}) {
+        const { worker: fbWorker, workerParams: fbWorkerParams } = fbConfig;
+
+        const func = this.worker || fbWorker;
+        const params = this.workerParams || fbWorkerParams;
+
+        if (!func && !params) {
+            throw new Error("no config set and no fallback config provided");
         }
-        throw new Error("no worker or workerParams is set for this task");
+
+        if (!func) {
+            throw new Error("no worker set and no fallback worker provided");
+        }
+
+        if (!params) {
+            throw new Error(
+                "no workerParams set and no fallback workerParams provided",
+            );
+        }
+
+        this.#result = func(...params);
+        return this.#result;
     }
 }
 

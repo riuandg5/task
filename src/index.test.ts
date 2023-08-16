@@ -66,27 +66,102 @@ describe("Task class", () => {
     });
 
     describe("call execute method", () => {
-        test("throws with undefined worker or workerParams", () => {
-            expect(() => new Task().execute()).toThrowError(
-                "no worker or workerParams is set for this task",
-            );
+        describe("with no fallback config", () => {
+            test("throws with undefined worker or workerParams", () => {
+                expect(() => new Task().execute()).toThrowError(
+                    "no config set and no fallback config provided",
+                );
 
-            expect(() =>
-                new Task({ worker: (a: number, b: number) => a + b }).execute(),
-            ).toThrowError("no worker or workerParams is set for this task");
+                expect(() =>
+                    new Task({
+                        worker: (a: number, b: number) => a + b,
+                    }).execute(),
+                ).toThrowError(
+                    "no workerParams set and no fallback workerParams provided",
+                );
 
-            expect(() =>
-                new Task({ workerParams: [1, 2] }).execute(),
-            ).toThrowError("no worker or workerParams is set for this task");
+                expect(() =>
+                    new Task({ workerParams: [1, 2] }).execute(),
+                ).toThrowError("no worker set and no fallback worker provided");
+            });
+
+            test("returns with defined worker and workerParams", () => {
+                expect(
+                    new Task({
+                        worker: (a: number, b: number) => a + b,
+                        workerParams: [1, 2],
+                    }).execute(),
+                ).toBe(3);
+            });
         });
 
-        test("returns with defined worker and workerParams", () => {
-            expect(
-                new Task({
-                    worker: (a: number, b: number) => a + b,
-                    workerParams: [1, 2],
-                }).execute(),
-            ).toBe(3);
+        describe("with fallback config", () => {
+            test("throws with missing fallback and undefined worker or workerParams", () => {
+                expect(() =>
+                    new Task<number[], number>().execute({
+                        worker: (x: number, y: number) => x * y,
+                    }),
+                ).toThrowError(
+                    "no workerParams set and no fallback workerParams provided",
+                );
+
+                expect(() =>
+                    new Task<number[], number>().execute({
+                        workerParams: [4, 5],
+                    }),
+                ).toThrowError("no worker set and no fallback worker provided");
+
+                expect(() =>
+                    new Task({
+                        worker: (a: number, b: number) => a + b,
+                    }).execute({
+                        worker: (x: number, y: number) => x * y,
+                    }),
+                ).toThrowError(
+                    "no workerParams set and no fallback workerParams provided",
+                );
+
+                expect(() =>
+                    new Task({ workerParams: [1, 2] }).execute({
+                        workerParams: [4, 5],
+                    }),
+                ).toThrowError("no worker set and no fallback worker provided");
+            });
+
+            test("returns with correct fallabck and undefined worker or workerParams", () => {
+                expect(
+                    new Task<number[], number>().execute({
+                        worker: (x: number, y: number) => x * y,
+                        workerParams: [4, 5],
+                    }),
+                ).toBe(20);
+
+                expect(
+                    new Task({
+                        worker: (a: number, b: number) => a + b,
+                    }).execute({
+                        workerParams: [4, 5],
+                    }),
+                ).toBe(9);
+
+                expect(
+                    new Task({ workerParams: [1, 2] }).execute({
+                        worker: (c, d) => c * d,
+                    }),
+                ).toBe(2);
+            });
+
+            test("returns with defined worker and workerParams", () => {
+                expect(
+                    new Task({
+                        worker: (a: number, b: number) => a + b,
+                        workerParams: [1, 2],
+                    }).execute({
+                        worker: (c, d) => c * d,
+                        workerParams: [4, 5],
+                    }),
+                ).toBe(3);
+            });
         });
     });
 
@@ -145,6 +220,39 @@ describe("Task class", () => {
 
             task.execute();
             expect(task.result).toBe(5);
+        });
+
+        describe("after task execution uses fallback config", () => {
+            test("sets according to fallback worker if it is used", () => {
+                const task = new Task({
+                    workerParams: [1, 2],
+                });
+
+                expect(task.result).toBeUndefined();
+
+                task.execute({ worker: (c, d) => c * d });
+                expect(task.result).toBe(2);
+            });
+
+            test("sets according to fallback workerParams if it is used", () => {
+                const task = new Task({
+                    worker: (a: number, b: number) => a + b,
+                });
+
+                expect(task.result).toBeUndefined();
+
+                task.execute({ workerParams: [4, 5] });
+                expect(task.result).toBe(9);
+            });
+
+            test("sets according to both fallback worker and workerParams if they are used", () => {
+                const task = new Task<number[], number>();
+
+                expect(task.result).toBeUndefined();
+
+                task.execute({ worker: (c, d) => c * d, workerParams: [4, 5] });
+                expect(task.result).toBe(20);
+            });
         });
     });
 });
