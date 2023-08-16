@@ -2,160 +2,149 @@ import { describe, test, expect } from "vitest";
 import Task from "./index";
 
 describe("Task class", () => {
-    describe("constructor initializtion", () => {
-        test("with worker not having 0 parameters", () => {
-            const worker = (name: string, age: number, subjects: string[]) => {
-                return { name, age, subjects };
-            };
-            const workerParams: [
-                name: string,
-                age: number,
-                subjects: string[],
-            ] = ["Student", 18, ["Physics", "Chemistry", "Maths"]];
-            const task = new Task(workerParams, worker);
+    describe("constructor initialization", () => {
+        test("with no worker and no workerParams", () => {
+            const task = new Task();
 
             expect(task).toBeInstanceOf(Task);
-            expect(task.worker).toBe(worker);
-            expect(task.workerParams).toEqual(workerParams);
+            expect(task.worker).toBeUndefined();
+            expect(task.workerParams).toBeUndefined();
             expect(task.result).toBeUndefined();
         });
 
-        test("with worker having 0 parameters", () => {
-            const worker = () => `Hello World!`;
-            const workerParams: [] = [];
-            const task = new Task(workerParams, worker);
+        test("with only worker", () => {
+            const worker = (a: number, b: number) => a + b;
+            const task = new Task({ worker });
 
             expect(task).toBeInstanceOf(Task);
             expect(task.worker).toBe(worker);
-            expect(task.workerParams).toEqual([]);
+            expect(task.workerParams).toBeUndefined();
             expect(task.result).toBeUndefined();
         });
 
-        test("with no worker", () => {
-            const workerParams = ["Hello", "World"];
-            const task = new Task(workerParams);
+        test("with only workerParams", () => {
+            const workerParams = [1, 2];
+            const task = new Task({ workerParams });
 
             expect(task).toBeInstanceOf(Task);
             expect(task.worker).toBeUndefined();
             expect(task.workerParams).toEqual(workerParams);
             expect(task.result).toBeUndefined();
         });
+
+        test("with both worker and workerParams", () => {
+            const worker = (a: number, b: number) => a + b;
+            const workerParams: [p1: number, p2: number] = [1, 2];
+            const task = new Task({ worker, workerParams });
+
+            expect(task).toBeInstanceOf(Task);
+            expect(task.worker).toBe(worker);
+            expect(task.workerParams).toEqual(workerParams);
+            expect(task.result).toBeUndefined();
+        });
     });
 
-    describe("execute method", () => {
-        test("with worker", () => {
-            const task = new Task(["Name", 20], (name: string, age: number) => {
-                return { name, age };
-            });
+    test("get and set worker property", () => {
+        const worker = (a: number, b: number) => a + b;
+        const task = new Task({ worker, workerParams: [1, 2] });
 
-            expect(task.result).toBeUndefined();
+        const newWorker = (c: number, d: number) => c - d;
+        task.worker = newWorker;
+        expect(task.worker).toBe(newWorker);
+    });
 
-            const result = task.execute();
-            expect(result).toEqual({ name: "Name", age: 20 });
-
-            expect(task.result).toEqual(result);
+    test("get and set workerParams property", () => {
+        const workerParams: [p1: number, p2: number] = [1, 2];
+        const task = new Task({
+            worker: (a: number, b: number) => a + b,
+            workerParams,
         });
 
-        test("without worker", () => {
-            const task = new Task([1, 2]);
+        const newWorkerParams: [p1: number, p2: number] = [3, 4];
+        task.workerParams = newWorkerParams;
+        expect(task.workerParams).toEqual(newWorkerParams);
+    });
 
-            expect(task.result).toBeUndefined();
-
-            expect(() => task.execute()).toThrowError(
-                "no worker is set for this task",
+    describe("call execute method", () => {
+        test("throws with undefined worker or workerParams", () => {
+            expect(() => new Task().execute()).toThrowError(
+                "no worker or workerParams is set for this task",
             );
 
-            expect(task.result).toBeUndefined();
+            expect(() =>
+                new Task({ worker: (a: number, b: number) => a + b }).execute(),
+            ).toThrowError("no worker or workerParams is set for this task");
+
+            expect(() =>
+                new Task({ workerParams: [1, 2] }).execute(),
+            ).toThrowError("no worker or workerParams is set for this task");
         });
 
-        test("with worker which throws error", () => {
-            const task = new Task([], () => {
-                throw new Error("something went wrong");
+        test("returns with defined worker and workerParams", () => {
+            expect(
+                new Task({
+                    worker: (a: number, b: number) => a + b,
+                    workerParams: [1, 2],
+                }).execute(),
+            ).toBe(3);
+        });
+    });
+
+    describe("get result property", () => {
+        test("sets after task execution", () => {
+            const task = new Task({
+                worker: (a: number, b: number) => a + b,
+                workerParams: [1, 2],
             });
 
             expect(task.result).toBeUndefined();
 
-            expect(() => task.execute()).toThrowError("something went wrong");
-
-            expect(task.result).toBeUndefined();
-        });
-    });
-
-    describe("setWorker method", () => {
-        test("to task with no worker", () => {
-            const task = new Task([1, 2]);
-
-            expect(task.worker).toBeUndefined();
-
-            const worker = (x: number, y: number) => x + y;
-            task.worker = worker;
-
-            expect(task.worker).toBe(worker);
+            task.execute();
+            expect(task.result).toBe(3);
         });
 
-        test("to task with worker", () => {
-            const worker = (x: number, y: number) => x + y;
-            const task = new Task([1, 2], worker);
-
-            expect(task.worker).toBe(worker);
-
-            const newWorker = (x: number, y: number) => x - y;
-            task.worker = newWorker;
-
-            expect(task.worker).toBe(newWorker);
-        });
-    });
-
-    describe("getResult method", () => {
-        test("returns updated result after each execution", () => {
+        test("updates after each execution of task", () => {
             let globalCount = 0;
-            const worker = () => {
-                globalCount += 1;
-                return globalCount;
-            };
-            const task = new Task([], worker);
+            const task = new Task({
+                worker: () => {
+                    globalCount += 1;
+                    return globalCount;
+                },
+                workerParams: [],
+            });
 
-            expect(task.result).toBeUndefined();
             expect(globalCount).toBe(0);
+            expect(task.result).toBeUndefined();
 
-            expect(task.execute()).toBe(1);
-            expect(task.result).toBe(1);
+            task.execute();
             expect(globalCount).toBe(1);
+            expect(task.result).toBe(1);
 
-            expect(task.execute()).toBe(2);
-            expect(task.result).toBe(2);
+            task.execute();
             expect(globalCount).toBe(2);
+            expect(task.result).toBe(2);
         });
 
-        const worker = (x: number, y: number) => x + y;
+        test("resets after change of worker or workerParams", () => {
+            const task = new Task({
+                worker: (a: number, b: number) => a + b,
+                workerParams: [1, 2],
+            });
 
-        test("returns undefined as result resets after change of worker", () => {
-            const task = new Task([1, 2], worker);
+            task.execute();
+            expect(task.result).toBe(3);
 
+            task.worker = (c, d) => c - d;
             expect(task.result).toBeUndefined();
 
-            expect(task.execute()).toBe(3);
-
-            const newWorker = (x: number, y: number) => x - y;
-            task.worker = newWorker;
-
-            expect(task.result).toBeUndefined();
-        });
-
-        test("returns result according to current worker", () => {
-            const task = new Task([1, 2], worker);
-
-            expect(task.result).toBeUndefined();
-
-            expect(task.execute()).toBe(3);
-
-            const newWorker = (x: number, y: number) => x - y;
-            task.worker = newWorker;
-
-            expect(task.result).toBeUndefined();
-
-            expect(task.execute()).toBe(-1);
+            task.execute();
             expect(task.result).toBe(-1);
+
+            task.workerParams = [10, 5];
+            expect(task.result).toBeUndefined();
+
+            task.execute();
+            expect(task.result).toBe(5);
         });
     });
 });
