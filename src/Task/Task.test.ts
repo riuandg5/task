@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import Task from "./index";
+import { Task } from "./Task.js";
 
 describe("Task class", () => {
     describe("constructor initialization", () => {
