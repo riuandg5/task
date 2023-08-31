@@ -1,6 +1,6 @@
 {
     "include": ["./src/**/*.ts"], // files to include in the transpilation
-    "exclude": ["./src/**/*.test.ts"], // files to exclude in the transpilation
+    "exclude": ["./src/**/*.test.ts", "./src/**/*.bench.ts"], // files to exclude in the transpilation
     "compilerOptions": {
         "rootDir": "./src/", // dir tree to maintin in "outDir";
         "outDir": "./lib/", // dir for tranpiled js files

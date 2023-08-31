@@ -38,6 +38,7 @@
         "compile:watch": "tsc --watch",
         "test": "vitest --run --coverage",
         "test:watch": "vitest --watch",
+        "test:bench": "vitest bench --run",
         "clean": "rimraf ./lib/",
         "build": "npm run clean && npm run compile",
         "build:dev": "concurrently \"npm:compile:watch\" \"npm:test:watch\"",
