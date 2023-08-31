@@ -1,6 +1,6 @@
 {
     "name": "@riuandg5/task-execute",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "A utility to create tasks, group tasks, and execute.",
     "author": "Rishu Anand <riuandg5@gmail.com>",
     "license": "MIT",

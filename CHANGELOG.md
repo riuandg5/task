@@ -1,3 +1,9 @@
+# [1.2.0](https://github.com/riuandg5/task-execute/compare/v1.1.0...v1.2.0) (2023-08-31)
+
+### Features
+
+-   add GroupTask class ([0b6c744](https://github.com/riuandg5/task-execute/commit/0b6c74498cdcb8b7c68ebc0d38df9c654ef55b98))
+
 # [1.1.0](https://github.com/riuandg5/task-execute/compare/v1.0.0...v1.1.0) (2023-08-16)
 
 ### Bug Fixes
