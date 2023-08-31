@@ -98,7 +98,7 @@ console.log(task.result);
 Use to execute the task which basically calls the `worker` with `workerParams`.
 
 ```ts
-task.execute(fbConfig?: taskConfigI<T, R>);
+task.execute(fbConfig?: TaskConfigI<T, R>);
 ```
 
 -   Parameters
@@ -161,6 +161,139 @@ task.execute(fbConfig?: taskConfigI<T, R>);
 
 ```ts
 (...workerParams: T) => R;
+```
+
+## `GroupTask`
+
+The `GroupTask` interface provides the ability to create, manage and execute a group of tasks.
+
+### Constructor
+
+Creates and returns a new `GroupTask`.
+
+```ts
+new GroupTask<T, R>(groupTaskConfig: GroupTaskConfigI<T, R>);
+```
+
+#### Parameters
+
+-   `groupTaskConfig`
+
+    | type                     | required | defaut | description                                             |
+    | ------------------------ | -------- | ------ | ------------------------------------------------------- |
+    | `GroupTaskConfigI<T, R>` | yes      | -      | Use to configure group task with `type` and `subTasks`. |
+
+    ```ts
+    const groupTaskConfig: GroupTaskConfigI<[p1: number, p2: string], boolean> =
+        {
+            type: "series",
+            subTasks: [
+                new Task({
+                    worker: (num, str) => num === str.length,
+                    workerParams: [11, "hello world"],
+                }),
+                new Task({
+                    worker: (num, str) => num === str.length,
+                    workerParams: [2, "hi"],
+                }),
+            ],
+        };
+    const groupTask = new GroupTask(groupTaskConfig);
+    ```
+
+### Properties
+
+|            | readonly | type           | default     | description                                |
+| ---------- | -------- | -------------- | ----------- | ------------------------------------------ |
+| `type`     | yes      | `GroupTaskT`   | -           | Use to get `type` of the group task.       |
+| `subTasks` | yes      | `Task<T, R>[]` | -           | Use to get `subTasks` of the group task.   |
+| `result`   | yes      | `R`            | `undefined` | Use to get `result` of the task execution. |
+
+```ts
+const groupTaskConfig: GroupTaskConfigI<[p1: number, p2: string], boolean> = {
+    type: "series",
+    subTasks: [
+        new Task({
+            worker: (num, str) => num === str.length,
+            workerParams: [11, "hello world"],
+        }),
+        new Task({
+            worker: (num, str) => num === str.length,
+            workerParams: [4, "hi"],
+        }),
+    ],
+};
+const groupTask = new GroupTask(groupTaskConfig);
+
+// get type
+console.log(groupTask.type);
+
+// get subTasks
+console.log(groupTask.subTasks);
+
+// get result
+console.log(groupTask.result);
+```
+
+### Methods
+
+`execute()`
+
+Use to execute the task which basically executes `subTasks` according to `type`.
+
+```ts
+groupTask.execute(fbConfig?: TaskConfigI<T, R>);
+```
+
+-   Parameters
+
+    `fbConfig`
+
+    | type                | required | defaut | description                                               |
+    | ------------------- | -------- | ------ | --------------------------------------------------------- |
+    | `TaskConfigI<T, R>` | no       | `{}`   | Use to provide fallback configuration for the `subTasks`. |
+
+-   Returns
+
+    | type           | description                                   |
+    | -------------- | --------------------------------------------- |
+    | `Awaited<R>[]` | Array of results of the `subTasks` execution. |
+
+-   Example
+
+    ```ts
+    const groupTaskConfig: GroupTaskConfigI<[p1: number, p2: string], boolean> =
+        {
+            type: "parallel",
+            subTasks: [
+                new Task({
+                    worker: (num, str) => num === str.length,
+                    workerParams: [11, "hello world"],
+                }),
+                new Task({
+                    worker: (num, str) => num === str.length,
+                }),
+            ],
+        };
+    const groupTask = new GroupTask(groupTaskConfig);
+    groupTask.execute({ workerParams: [2, "hi"] }); // returns [true, true]
+    ```
+
+### Types
+
+`GroupTaskT`
+
+```ts
+"series" | "parallel";
+```
+
+`GroupTaskConfigI<T, R>`
+
+```ts
+{
+    type: GroupTaskT;
+    subTasks: Task < T, R > [];
+}
 ```
 
 ## License
