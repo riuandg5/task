@@ -10,10 +10,21 @@ To install and use package, run:
 $ npm install -S @riuandg5/task-execute
 ```
 
-then import the `Task` class from the package:
+then import the `Task` and `GroupTask` classes from the package:
 
 ```ts
-import Task from "@riuandg5/task-execute";
+import { Task, GroupTask } from "@riuandg5/task-execute";
+```
+
+also import types and interfaces if needed:
+
+```ts
+import type {
+    TaskConfigI,
+    WorkerT,
+    GroupTaskT,
+    GroupTaskConfigI,
+} from "@riuandg5/task-execute";
 ```
 
 ## API
@@ -184,55 +195,92 @@ new GroupTask<T, R>(groupTaskConfig: GroupTaskConfigI<T, R>);
     | `GroupTaskConfigI<T, R>` | yes      | -      | Use to configure group task with `type` and `subTasks`. |
 
     ```ts
-    const groupTaskConfig: GroupTaskConfigI<[p1: number, p2: string], boolean> =
-        {
-            type: "series",
-            subTasks: [
-                new Task({
-                    worker: (num, str) => num === str.length,
-                    workerParams: [11, "hello world"],
-                }),
-                new Task({
-                    worker: (num, str) => num === str.length,
-                    workerParams: [2, "hi"],
-                }),
-            ],
-        };
-    const groupTask = new GroupTask(groupTaskConfig);
+    const groupTask1Config: GroupTaskConfigI<
+        [p1: number, p2: string],
+        boolean
+    > = {
+        type: "parallel",
+        subTasks: [
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [4, "world"],
+            }),
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [11, "hello world"],
+            }),
+        ],
+    };
+
+    const groupTask2Config: GroupTaskConfigI<
+        [p1: number, p2: string],
+        boolean
+    > = {
+        type: "series",
+        subTasks: [
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [5, "hello"],
+            }),
+            new GroupTask(groupTask1Config),
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [2, "hi"],
+            }),
+        ],
+    };
+
+    const groupTask2 = new GroupTask(groupTask2Config);
     ```
 
 ### Properties
 
-|            | readonly | type           | default     | description                                |
-| ---------- | -------- | -------------- | ----------- | ------------------------------------------ |
-| `type`     | yes      | `GroupTaskT`   | -           | Use to get `type` of the group task.       |
-| `subTasks` | yes      | `Task<T, R>[]` | -           | Use to get `subTasks` of the group task.   |
-| `result`   | yes      | `R`            | `undefined` | Use to get `result` of the task execution. |
+|            | readonly | type                                    | default     | description                                |
+| ---------- | -------- | --------------------------------------- | ----------- | ------------------------------------------ |
+| `type`     | yes      | `GroupTaskT`                            | -           | Use to get `type` of the group task.       |
+| `subTasks` | yes      | `(Task<T, R> \| GroupTask<T, R>)[]`     | -           | Use to get `subTasks` of the group task.   |
+| `result`   | yes      | `NestedResult<Awaited<R> \| undefined>` | `undefined` | Use to get `result` of the task execution. |
 
 ```ts
-const groupTaskConfig: GroupTaskConfigI<[p1: number, p2: string], boolean> = {
-    type: "series",
+const groupTask1Config: GroupTaskConfigI<[p1: number, p2: string], boolean> = {
+    type: "parallel",
     subTasks: [
+        new Task({
+            worker: (num, str) => num === str.length,
+            workerParams: [4, "world"],
+        }),
         new Task({
             worker: (num, str) => num === str.length,
             workerParams: [11, "hello world"],
         }),
+    ],
+};
+
+const groupTask2Config: GroupTaskConfigI<[p1: number, p2: string], boolean> = {
+    type: "series",
+    subTasks: [
         new Task({
             worker: (num, str) => num === str.length,
-            workerParams: [4, "hi"],
+            workerParams: [5, "hello"],
+        }),
+        new GroupTask(groupTask1Config),
+        new Task({
+            worker: (num, str) => num === str.length,
+            workerParams: [2, "hi"],
         }),
     ],
 };
-const groupTask = new GroupTask(groupTaskConfig);
+
+const groupTask2 = new GroupTask(groupTask2Config);
 
 // get type
-console.log(groupTask.type);
+console.log(groupTask2.type);
 
 // get subTasks
-console.log(groupTask.subTasks);
+console.log(groupTask2.subTasks);
 
 // get result
-console.log(groupTask.result);
+console.log(groupTask2.result);
 ```
 
 ### Methods
@@ -255,28 +303,51 @@ groupTask.execute(fbConfig?: TaskConfigI<T, R>);
 
 -   Returns
 
-    | type           | description                                   |
-    | -------------- | --------------------------------------------- |
-    | `Awaited<R>[]` | Array of results of the `subTasks` execution. |
+    | type                                             | description                                   |
+    | ------------------------------------------------ | --------------------------------------------- |
+    | `Promise<NestedResult<Awaited<R> \| undefined>>` | Array of results of the `subTasks` execution. |
 
 -   Example
 
     ```ts
-    const groupTaskConfig: GroupTaskConfigI<[p1: number, p2: string], boolean> =
-        {
-            type: "parallel",
-            subTasks: [
-                new Task({
-                    worker: (num, str) => num === str.length,
-                    workerParams: [11, "hello world"],
-                }),
-                new Task({
-                    worker: (num, str) => num === str.length,
-                }),
-            ],
-        };
-    const groupTask = new GroupTask(groupTaskConfig);
-    groupTask.execute({ workerParams: [2, "hi"] }); // returns [true, true]
+    const groupTask1Config: GroupTaskConfigI<
+        [p1: number, p2: string],
+        boolean
+    > = {
+        type: "parallel",
+        subTasks: [
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [4, "world"],
+            }),
+            new Task({
+                worker: (num, str) => num === str.length,
+            }),
+        ],
+    };
+
+    const groupTask2Config: GroupTaskConfigI<
+        [p1: number, p2: string],
+        boolean
+    > = {
+        type: "series",
+        subTasks: [
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [5, "hello"],
+            }),
+            new GroupTask(groupTask1Config),
+            new Task({
+                worker: (num, str) => num === str.length,
+                workerParams: [2, "hi"],
+            }),
+        ],
+    };
+
+    const groupTask2 = new GroupTask(groupTask2Config);
+
+    groupTask2.execute({ workerParams: [11, "hello world"] });
+    // returns [true, [false, true], true]
     ```
 
 ### Types
@@ -294,6 +365,12 @@ groupTask.execute(fbConfig?: TaskConfigI<T, R>);
     type: GroupTaskT;
     subTasks: Task < T, R > [];
 }
+```
+
+`NestedResult<R>`
+
+```ts
+(R | NestedResult<R>)[]
 ```
 
 ## License
