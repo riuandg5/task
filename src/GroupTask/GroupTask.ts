@@ -4,13 +4,15 @@ export type GroupTaskT = "series" | "parallel";
 
 export interface GroupTaskConfigI<T extends unknown[], R> {
     type: GroupTaskT;
-    subTasks: Task<T, R>[];
+    subTasks: (Task<T, R> | GroupTask<T, R>)[];
 }
+
+type NestedResult<R> = (R | NestedResult<R>)[];
 
 export class GroupTask<T extends unknown[], R> {
     #type;
     #subTasks;
-    #result: Awaited<R>[] | undefined;
+    #result: NestedResult<Awaited<R> | undefined> | undefined;
 
     constructor(groupTaskConfig: GroupTaskConfigI<T, R>) {
         if (!groupTaskConfig) {
@@ -44,7 +46,7 @@ export class GroupTask<T extends unknown[], R> {
     }
 
     async execute(fbConfig: TaskConfigI<T, R> = {}) {
-        let result: Awaited<R>[] = [];
+        let result: NestedResult<Awaited<R> | undefined> = [];
         if (this.type === "series") {
             for (const subTask of this.subTasks) {
                 const res = await subTask.execute(fbConfig);

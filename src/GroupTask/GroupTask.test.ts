@@ -34,14 +34,45 @@ describe("GroupTask class", () => {
         });
 
         test("with valid type and subTasks", () => {
-            const type: GroupTaskT = "series";
-            const subTasks = [new Task(), new Task()];
-            const groupTask = new GroupTask({ type, subTasks });
+            const type1: GroupTaskT = "series";
+            const subTasks1 = [new Task(), new Task()];
+            const groupTask1 = new GroupTask({
+                type: type1,
+                subTasks: subTasks1,
+            });
 
-            expect(groupTask).toBeInstanceOf(GroupTask);
-            expect(groupTask.type).toBe(type);
-            expect(groupTask.subTasks).toEqual(subTasks);
-            expect(groupTask.result).toBeUndefined();
+            const type2: GroupTaskT = "parallel";
+            const subTasks2 = [new Task(), groupTask1, new Task()];
+            const groupTask2 = new GroupTask({
+                type: type2,
+                subTasks: subTasks2,
+            });
+
+            const type3: GroupTaskT = "series";
+            const subTasks3 = [new Task(), groupTask2, new Task()];
+            const groupTask3 = new GroupTask({
+                type: type3,
+                subTasks: subTasks3,
+            });
+
+            expect(groupTask3).toBeInstanceOf(GroupTask);
+            expect(groupTask3.type).toBe(type3);
+            expect(groupTask3.subTasks).toEqual(subTasks3);
+            expect(groupTask3.result).toBeUndefined();
+
+            expect(groupTask3.subTasks[1]).toBeInstanceOf(GroupTask);
+            expect(groupTask3.subTasks[1].type).toBe(type2);
+            expect(groupTask3.subTasks[1].subTasks).toEqual(subTasks2);
+            expect(groupTask3.subTasks[1].result).toBeUndefined();
+
+            expect(groupTask3.subTasks[1].subTasks[1]).toBeInstanceOf(
+                GroupTask,
+            );
+            expect(groupTask3.subTasks[1].subTasks[1].type).toBe(type1);
+            expect(groupTask3.subTasks[1].subTasks[1].subTasks).toEqual(
+                subTasks1,
+            );
+            expect(groupTask3.subTasks[1].subTasks[1].result).toBeUndefined();
         });
     });
 
@@ -59,6 +90,19 @@ describe("GroupTask class", () => {
             new Task({
                 worker: (a: number, b: number) => a + b,
                 workerParams: [1, 2],
+            }),
+            new GroupTask({
+                type: "series",
+                subTasks: [
+                    new Task({
+                        worker: (a: number, b: number) => a * b,
+                        workerParams: [1, 2],
+                    }),
+                    new Task({
+                        worker: (c: number, d: number) => c / d,
+                        workerParams: [3, 4],
+                    }),
+                ],
             }),
             new Task({
                 worker: (c: number, d: number) => c - d,
@@ -146,6 +190,35 @@ describe("GroupTask class", () => {
             expect(await asyncTasksInParallel.execute()).toEqual(result);
         });
 
+        test("for nested subTasks", async () => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const groupTask = new GroupTask<any, any>({
+                type: "series",
+                subTasks: [
+                    syncTasksInSeries,
+                    syncTask1,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    new GroupTask<any, any>({
+                        type: "parallel",
+                        subTasks: [
+                            syncTasksInParallel,
+                            asyncTask2,
+                            asyncTasksInSeries,
+                        ],
+                    }),
+                    asyncTasksInParallel,
+                ],
+            });
+            const result = [
+                [3, 12, -1],
+                3,
+                [[3, 12, -1], 12, [3, 12, -1]],
+                [3, 12, -1],
+            ];
+
+            expect(await groupTask.execute()).toEqual(result);
+        });
+
         test("should take nearly same time for sync tasks in series and parallel", async () => {
             let start = Date.now();
             await syncTasksInSeries.execute();
@@ -177,23 +250,60 @@ describe("GroupTask class", () => {
 
     describe("get result property", () => {
         test("sets after task execution", async () => {
-            const type: GroupTaskT = "series";
-            const subTasks = [
-                new Task({
-                    worker: (a: number, b: number) => a + b,
-                    workerParams: [1, 2],
-                }),
-                new Task({
-                    worker: (c: number, d: number) => c - d,
-                    workerParams: [3, 4],
-                }),
-            ];
-            const groupTask = new GroupTask({ type, subTasks });
+            const groupTask = new GroupTask({
+                type: "series",
+                subTasks: [
+                    new Task({
+                        worker: (a: number, b: number) => a + b,
+                        workerParams: [1, 2],
+                    }),
+                    new GroupTask({
+                        type: "parallel",
+                        subTasks: [
+                            new Task({
+                                worker: (a: number, b: number) => a - b,
+                                workerParams: [1, 2],
+                            }),
+                            new GroupTask({
+                                type: "series",
+                                subTasks: [
+                                    new Task({
+                                        worker: (a: number, b: number) => a * b,
+                                        workerParams: [1, 2],
+                                    }),
+                                    new Task({
+                                        worker: (a: number, b: number) => a / b,
+                                        workerParams: [1, 2],
+                                    }),
+                                ],
+                            }),
+                        ],
+                    }),
+                ],
+            });
 
             expect(groupTask.result).toBeUndefined();
 
             await groupTask.execute();
-            expect(groupTask.result).toEqual([3, -1]);
+            const result = [3, [-1, [2, 1 / 2]]];
+
+            expect(groupTask.result).toEqual(result);
+            expect(groupTask.subTasks[0].result).toEqual(result[0]);
+            expect(groupTask.subTasks[1].result).toEqual(result[1]);
+
+            expect(groupTask.subTasks[1].subTasks[0].result).toEqual(
+                result[1][0],
+            );
+            expect(groupTask.subTasks[1].subTasks[1].result).toEqual(
+                result[1][1],
+            );
+
+            expect(
+                groupTask.subTasks[1].subTasks[1].subTasks[0].result,
+            ).toEqual(result[1][1][0]);
+            expect(
+                groupTask.subTasks[1].subTasks[1].subTasks[1].result,
+            ).toEqual(result[1][1][1]);
         });
 
         test("updates after each execution of task", async () => {
