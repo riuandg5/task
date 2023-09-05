@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/riuandg5/task-execute/compare/v1.2.0...v1.3.0) (2023-09-05)
+
+### Features
+
+-   allow both Task and GroupTask in GroupTask ([624e940](https://github.com/riuandg5/task-execute/commit/624e940671608b02d1d3e40ff2a351be2472212b))
+
 # [1.2.0](https://github.com/riuandg5/task-execute/compare/v1.1.0...v1.2.0) (2023-08-31)
 
 ### Features
