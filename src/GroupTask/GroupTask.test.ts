@@ -1,6 +1,14 @@
 import { describe, test, expect } from "vitest";
-import { GroupTask, GroupTaskConfigI, GroupTaskT } from "./GroupTask.js";
-import { Task, WorkerT } from "../Task/Task.js";
+
+import { GroupTask } from "./GroupTask.js";
+import type {
+    GroupTaskModeT,
+    GroupSubTasksT,
+    GroupTaskConfigI,
+} from "./GroupTask.js";
+
+import { Task } from "../Task/Task.js";
+import type { TaskWorkerT } from "../Task/Task.js";
 
 describe("GroupTask class", () => {
     describe("constructor initialization", () => {
@@ -14,18 +22,18 @@ describe("GroupTask class", () => {
             );
         });
 
-        test("throws with invalid type", () => {
+        test("throws with invalid mode", () => {
             const invalidTypeConfig = {
-                type: "invalid",
+                mode: "invalid",
             } as unknown as GroupTaskConfigI<unknown[], unknown>;
             expect(() => new GroupTask(invalidTypeConfig)).toThrowError(
-                "invalid grouptask type",
+                "invalid grouptask mode",
             );
         });
 
         test("throws with no subTasks", () => {
             const noSubTasksConfig = {
-                type: "series",
+                mode: "series",
                 subTasks: [],
             } as unknown as GroupTaskConfigI<unknown[], unknown>;
             expect(() => new GroupTask(noSubTasksConfig)).toThrowError(
@@ -33,42 +41,64 @@ describe("GroupTask class", () => {
             );
         });
 
-        test("with valid type and subTasks", () => {
-            const type1: GroupTaskT = "series";
-            const subTasks1 = [new Task(), new Task()];
+        test("with valid mode and single Task in subTasks", () => {
+            const mode: GroupTaskModeT = "series";
+            const subTasks: GroupSubTasksT<number[], number> = [new Task()];
+            const groupTask = new GroupTask({ mode, subTasks });
+
+            expect(groupTask).toBeInstanceOf(GroupTask);
+            expect(groupTask.mode).toBe(mode);
+            expect(groupTask.subTasks).toEqual(subTasks);
+            expect(groupTask.result).toBeUndefined();
+        });
+
+        test("with valid mode and subTasks", () => {
+            const type1: GroupTaskModeT = "series";
+            const subTasks1: GroupSubTasksT<number[], number> = [
+                new Task(),
+                new Task(),
+            ];
             const groupTask1 = new GroupTask({
-                type: type1,
+                mode: type1,
                 subTasks: subTasks1,
             });
 
-            const type2: GroupTaskT = "parallel";
-            const subTasks2 = [new Task(), groupTask1, new Task()];
+            const type2: GroupTaskModeT = "parallel";
+            const subTasks2: GroupSubTasksT<number[], number> = [
+                new Task(),
+                groupTask1,
+                new Task(),
+            ];
             const groupTask2 = new GroupTask({
-                type: type2,
+                mode: type2,
                 subTasks: subTasks2,
             });
 
-            const type3: GroupTaskT = "series";
-            const subTasks3 = [new Task(), groupTask2, new Task()];
+            const type3: GroupTaskModeT = "series";
+            const subTasks3: GroupSubTasksT<number[], number> = [
+                new Task(),
+                groupTask2,
+                new Task(),
+            ];
             const groupTask3 = new GroupTask({
-                type: type3,
+                mode: type3,
                 subTasks: subTasks3,
             });
 
             expect(groupTask3).toBeInstanceOf(GroupTask);
-            expect(groupTask3.type).toBe(type3);
+            expect(groupTask3.mode).toBe(type3);
             expect(groupTask3.subTasks).toEqual(subTasks3);
             expect(groupTask3.result).toBeUndefined();
 
             expect(groupTask3.subTasks[1]).toBeInstanceOf(GroupTask);
-            expect(groupTask3.subTasks[1].type).toBe(type2);
+            expect(groupTask3.subTasks[1].mode).toBe(type2);
             expect(groupTask3.subTasks[1].subTasks).toEqual(subTasks2);
             expect(groupTask3.subTasks[1].result).toBeUndefined();
 
             expect(groupTask3.subTasks[1].subTasks[1]).toBeInstanceOf(
                 GroupTask,
             );
-            expect(groupTask3.subTasks[1].subTasks[1].type).toBe(type1);
+            expect(groupTask3.subTasks[1].subTasks[1].mode).toBe(type1);
             expect(groupTask3.subTasks[1].subTasks[1].subTasks).toEqual(
                 subTasks1,
             );
@@ -77,22 +107,36 @@ describe("GroupTask class", () => {
     });
 
     test("get type property", () => {
-        const type: GroupTaskT = "parallel";
-        const subTasks = [new Task()];
+        const type: GroupTaskModeT = "parallel";
+        const subTasks: GroupSubTasksT<number[], number> = [
+            new Task(),
+            new Task(),
+        ];
         const groupTask = new GroupTask({ type, subTasks });
 
         expect(groupTask.type).toBe(type);
     });
 
+    test("get mode property", () => {
+        const mode: GroupTaskModeT = "parallel";
+        const subTasks: GroupSubTasksT<number[], number> = [
+            new Task(),
+            new Task(),
+        ];
+        const groupTask = new GroupTask({ mode, subTasks });
+
+        expect(groupTask.mode).toBe(mode);
+    });
+
     test("get subTasks property", () => {
-        const type: GroupTaskT = "series";
-        const subTasks = [
+        const mode: GroupTaskModeT = "series";
+        const subTasks: GroupSubTasksT<number[], number> = [
             new Task({
                 worker: (a: number, b: number) => a + b,
                 workerParams: [1, 2],
             }),
             new GroupTask({
-                type: "series",
+                mode: "series",
                 subTasks: [
                     new Task({
                         worker: (a: number, b: number) => a * b,
@@ -109,18 +153,18 @@ describe("GroupTask class", () => {
                 workerParams: [3, 4],
             }),
         ];
-        const groupTask = new GroupTask({ type, subTasks });
+        const groupTask = new GroupTask({ mode, subTasks });
 
         expect(groupTask.subTasks).toEqual(subTasks);
     });
 
     describe("call execute method", () => {
-        type myWorker = WorkerT<[number, number], number>;
+        type myWorker = TaskWorkerT<[number, number], number>;
         const adder: myWorker = (a, b) => a + b;
         const multiplier: myWorker = (a, b) => a * b;
         const subtractor: myWorker = (a, b) => a - b;
 
-        type myAsyncWorker = WorkerT<[number, number], Promise<number>>;
+        type myAsyncWorker = TaskWorkerT<[number, number], Promise<number>>;
         const asyncAdder: myAsyncWorker = (a, b) =>
             new Promise((resolve) => setTimeout(() => resolve(a + b), 150));
         const asyncMultiplier: myAsyncWorker = (a, b) =>
@@ -155,20 +199,20 @@ describe("GroupTask class", () => {
         });
 
         const syncTasksInSeries = new GroupTask({
-            type: "series",
+            mode: "series",
             subTasks: [syncTask1, syncTask2, syncTask3],
         });
         const syncTasksInParallel = new GroupTask({
-            type: "parallel",
+            mode: "parallel",
             subTasks: [syncTask1, syncTask2, syncTask3],
         });
 
         const asyncTasksInSeries = new GroupTask({
-            type: "series",
+            mode: "series",
             subTasks: [asyncTask1, asyncTask2, asyncTask3],
         });
         const asyncTasksInParallel = new GroupTask({
-            type: "parallel",
+            mode: "parallel",
             subTasks: [asyncTask1, asyncTask2, asyncTask3],
         });
 
@@ -193,13 +237,13 @@ describe("GroupTask class", () => {
         test("for nested subTasks", async () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const groupTask = new GroupTask<any, any>({
-                type: "series",
+                mode: "series",
                 subTasks: [
                     syncTasksInSeries,
                     syncTask1,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     new GroupTask<any, any>({
-                        type: "parallel",
+                        mode: "parallel",
                         subTasks: [
                             syncTasksInParallel,
                             asyncTask2,
@@ -251,21 +295,21 @@ describe("GroupTask class", () => {
     describe("get result property", () => {
         test("sets after task execution", async () => {
             const groupTask = new GroupTask({
-                type: "series",
+                mode: "series",
                 subTasks: [
                     new Task({
                         worker: (a: number, b: number) => a + b,
                         workerParams: [1, 2],
                     }),
                     new GroupTask({
-                        type: "parallel",
+                        mode: "parallel",
                         subTasks: [
                             new Task({
                                 worker: (a: number, b: number) => a - b,
                                 workerParams: [1, 2],
                             }),
                             new GroupTask({
-                                type: "series",
+                                mode: "series",
                                 subTasks: [
                                     new Task({
                                         worker: (a: number, b: number) => a * b,
@@ -309,8 +353,8 @@ describe("GroupTask class", () => {
         test("updates after each execution of task", async () => {
             let globalCount = 0;
 
-            const type: GroupTaskT = "series";
-            const subTasks = [
+            const mode: GroupTaskModeT = "series";
+            const subTasks: GroupSubTasksT<[], number> = [
                 new Task({
                     worker: () => {
                         globalCount += 5;
@@ -326,7 +370,7 @@ describe("GroupTask class", () => {
                     workerParams: [],
                 }),
             ];
-            const groupTask = new GroupTask({ type, subTasks });
+            const groupTask = new GroupTask({ mode, subTasks });
 
             expect(globalCount).toBe(0);
             expect(groupTask.result).toBeUndefined();
