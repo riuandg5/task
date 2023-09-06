@@ -1,13 +1,11 @@
 import depd from "depd";
 const deprecate = depd("@riuandg5/task-excute");
 
+import { BaseTask } from "../BaseTask/BaseTask.js";
+import type { TaskConfigI } from "../BaseTask/BaseTask.js";
+
 import { Task } from "../Task/Task.js";
-import type {
-    TaskWorkerT,
-    TaskWorkerParamsT,
-    TaskConfigI,
-    TaskResultT,
-} from "../Task/Task.js";
+import type { TaskResultT } from "../Task/Task.js";
 
 export type GroupTaskModeT = "series" | "parallel";
 /**
@@ -41,16 +39,24 @@ export type GroupTaskConfigI<T extends unknown[], R> =
 type NestedResultT<R> = (R | NestedResultT<R>)[];
 export type GroupTaskResultT<R> = NestedResultT<TaskResultT<R>> | undefined;
 
-export class GroupTask<T extends unknown[], R> {
-    #worker;
-    #workerParams;
+export const GROUPTASKERROR = {
+    NO_CONFIG: "cannot create grouptask without config",
+    INVALID_MODE: "invalid grouptask mode",
+    EMPTY_SUBTASKS: "subTasks cannot be empty",
+};
+
+const DEPDMSG = {
+    DEP_TYPE: `Use of "type" is deprecated and will be removed in next major release. Use "mode" instead.`,
+    DEP_SINGLE_SUBTASK: `GroupTask must have at least a pair (2) of either Tasks, GroupTasks, or mix of them as it's subTasks. Support for < 2 subTasks is deprecated and will be removed in next major release.`,
+};
+
+export class GroupTask<T extends unknown[], R> extends BaseTask<T, R> {
     #mode;
     #subTasks;
-    #result: TaskResultT<R> | GroupTaskResultT<R>;
 
     constructor(groupTaskConfig: GroupTaskConfigI<T, R>) {
         if (!groupTaskConfig) {
-            throw new Error("cannot create grouptask without config");
+            throw new Error(GROUPTASKERROR.NO_CONFIG);
         }
 
         const { type, subTasks, worker, workerParams } =
@@ -58,44 +64,30 @@ export class GroupTask<T extends unknown[], R> {
         let { mode } = groupTaskConfig as GroupTaskConfigNewI<T, R>;
 
         if (type) {
-            deprecate(
-                `Use of "type" is deprecated and will be removed in next major release. Use "mode" instead.`,
-            );
+            deprecate(DEPDMSG.DEP_TYPE);
             if (!mode) {
                 mode = type;
             }
         }
 
         if (mode !== "series" && mode !== "parallel") {
-            throw new Error("invalid grouptask mode");
+            throw new Error(GROUPTASKERROR.INVALID_MODE);
         }
 
         if (subTasks.length === 0) {
-            throw new Error("subTasks cannot be empty");
+            throw new Error(GROUPTASKERROR.EMPTY_SUBTASKS);
         } else if (subTasks.length < 2) {
-            deprecate(
-                `GroupTask must have at least a pair (2) of either Tasks, GroupTasks, or mix of them as it's subTasks. Support for < 2 subTasks is deprecated and will be removed in next major release.`,
-            );
+            deprecate(DEPDMSG.DEP_SINGLE_SUBTASK);
         }
 
-        this.#worker = worker;
-        this.#workerParams = workerParams;
+        super({ worker, workerParams });
+
         this.#mode = mode;
         this.#subTasks = subTasks;
     }
 
-    get worker() {
-        return this.#worker;
-    }
-
-    get workerParams() {
-        return this.#workerParams;
-    }
-
     get type() {
-        deprecate(
-            `Use of "type" is deprecated and will be removed in next major release. Use "mode" instead.`,
-        );
+        deprecate(DEPDMSG.DEP_TYPE);
         return this.#mode;
     }
     get mode() {
@@ -106,18 +98,16 @@ export class GroupTask<T extends unknown[], R> {
         return this.#subTasks;
     }
 
-    get result() {
-        return this.#result;
+    set type(type: GroupTaskModeT) {
+        deprecate(DEPDMSG.DEP_TYPE);
+        this.#mode = type;
+    }
+    set mode(mode: GroupTaskModeT) {
+        this.#mode = mode;
     }
 
-    set worker(worker: TaskWorkerT<T, R>) {
-        this.#worker = worker;
-        this.#result = undefined;
-    }
-
-    set workerParams(workerParams: TaskWorkerParamsT<T>) {
-        this.#workerParams = workerParams;
-        this.#result = undefined;
+    set subTasks(subTasks: GroupSubTasksT<T, R>) {
+        this.#subTasks = subTasks;
     }
 
     async execute(
@@ -142,7 +132,7 @@ export class GroupTask<T extends unknown[], R> {
                 this.#subTasks.map((subTask) => subTask.execute(newFbConfig)),
             );
         }
-        this.#result = result;
-        return this.#result;
+        this.result = result;
+        return this.result;
     }
 }

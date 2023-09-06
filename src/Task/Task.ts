@@ -1,53 +1,16 @@
-export type TaskWorkerT<T extends unknown[], R> =
-    | ((...workerParams: T) => R)
-    | undefined;
-/**
- * @deprecated Will be removed in next major release. Use TaskWorkerT instead.
- */
-export type WorkerT<T extends unknown[], R> = TaskWorkerT<T, R>;
+import { BaseTask } from "../BaseTask/BaseTask.js";
+import type { TaskConfigI } from "../BaseTask/BaseTask.js";
 
-export type TaskWorkerParamsT<T> = T | undefined;
-
-export interface TaskConfigI<T extends unknown[], R> {
-    worker?: TaskWorkerT<T, R>;
-    workerParams?: TaskWorkerParamsT<T>;
-}
+export const TASKERROR = {
+    NO_CONFIG: "no config set and no fallback config provided",
+    NO_WORKER: "no worker set and no fallback worker provided",
+    NO_WORKERPARAMS:
+        "no workerParams set and no fallback workerParams provided",
+};
 
 export type TaskResultT<R> = R | undefined;
 
-export class Task<T extends unknown[], R> {
-    #worker;
-    #workerParams;
-    #result: TaskResultT<R>;
-
-    constructor(taskConfig: TaskConfigI<T, R> = {}) {
-        const { worker, workerParams } = taskConfig;
-        this.#worker = worker;
-        this.#workerParams = workerParams;
-    }
-
-    get worker() {
-        return this.#worker;
-    }
-
-    get workerParams() {
-        return this.#workerParams;
-    }
-
-    get result() {
-        return this.#result;
-    }
-
-    set worker(worker: TaskWorkerT<T, R>) {
-        this.#worker = worker;
-        this.#result = undefined;
-    }
-
-    set workerParams(workerParams: TaskWorkerParamsT<T>) {
-        this.#workerParams = workerParams;
-        this.#result = undefined;
-    }
-
+export class Task<T extends unknown[], R> extends BaseTask<T, R> {
     execute(fbConfig: TaskConfigI<T, R> = {}): TaskResultT<R> {
         const { worker: fbWorker, workerParams: fbWorkerParams } = fbConfig;
 
@@ -55,20 +18,18 @@ export class Task<T extends unknown[], R> {
         const workerParams = this.workerParams || fbWorkerParams;
 
         if (!worker && !workerParams) {
-            throw new Error("no config set and no fallback config provided");
+            throw new Error(TASKERROR.NO_CONFIG);
         }
 
         if (!worker) {
-            throw new Error("no worker set and no fallback worker provided");
+            throw new Error(TASKERROR.NO_WORKER);
         }
 
         if (!workerParams) {
-            throw new Error(
-                "no workerParams set and no fallback workerParams provided",
-            );
+            throw new Error(TASKERROR.NO_WORKERPARAMS);
         }
 
-        this.#result = worker(...workerParams);
-        return this.#result;
+        this.result = worker(...workerParams);
+        return this.result;
     }
 }

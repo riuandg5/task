@@ -1,48 +1,63 @@
 import { describe, bench } from "vitest";
+
+import type { TaskWorkerParamsT, TaskWorkerT } from "../BaseTask/BaseTask.js";
+
+import { Task } from "../Task/Task.js";
+
 import { GroupTask } from "./GroupTask.js";
-import { Task, WorkerT } from "../Task/Task.js";
+import type { GroupTaskModeT } from "./GroupTask.js";
 
-type myWorker = WorkerT<[number, number], number>;
-const adder: myWorker = (a, b) => a + b;
-const multiplier: myWorker = (a, b) => a * b;
-const subtractor: myWorker = (a, b) => a - b;
+// prepare a few workers, workerParams, Tasks, and results to be used in tests
+type mySyncWorker = TaskWorkerT<[p: number, q: number], number>;
+type myAsyncWorker = TaskWorkerT<[p: number, q: number], Promise<number>>;
+type myParams = TaskWorkerParamsT<[p: number, q: number]>;
 
-type myAsyncWorker = WorkerT<[number, number], Promise<number>>;
+const adder: mySyncWorker = (a, b) => a + b;
 const asyncAdder: myAsyncWorker = (a, b) =>
     new Promise((resolve) => setTimeout(() => resolve(a + b), 150));
-const asyncMultiplier: myAsyncWorker = (a, b) =>
-    new Promise((resolve) => setTimeout(() => resolve(a * b), 75));
+const adderParams: myParams = [1, 2];
+
+const subtractor: mySyncWorker = (a, b) => a - b;
 const asyncSubtractor: myAsyncWorker = (a, b) =>
     new Promise((resolve) => setTimeout(() => resolve(a - b), 37));
+const subtractorParams: myParams = [3, 4];
+
+const multiplier: mySyncWorker = (a, b) => a * b;
+const asyncMultiplier: myAsyncWorker = (a, b) =>
+    new Promise((resolve) => setTimeout(() => resolve(a * b), 75));
+const multiplierParams: myParams = [5, 6];
 
 const syncTask1 = new Task({
     worker: adder,
-    workerParams: [1, 2],
+    workerParams: adderParams,
 });
 const syncTask2 = new Task({
-    worker: multiplier,
-    workerParams: [3, 4],
+    worker: subtractor,
+    workerParams: subtractorParams,
 });
 const syncTask3 = new Task({
-    worker: subtractor,
-    workerParams: [5, 6],
+    worker: multiplier,
+    workerParams: multiplierParams,
 });
 
 const asyncTask1 = new Task({
     worker: asyncAdder,
-    workerParams: [1, 2],
+    workerParams: adderParams,
 });
 const asyncTask2 = new Task({
-    worker: asyncMultiplier,
-    workerParams: [3, 4],
+    worker: asyncSubtractor,
+    workerParams: subtractorParams,
 });
 const asyncTask3 = new Task({
-    worker: asyncSubtractor,
-    workerParams: [5, 6],
+    worker: asyncMultiplier,
+    workerParams: multiplierParams,
 });
 
+const series: GroupTaskModeT = "series";
+const parallel: GroupTaskModeT = "parallel";
+
 const syncTasksInSeries = new GroupTask({
-    type: "series",
+    type: series,
     subTasks: [
         syncTask1,
         syncTask2,
@@ -77,7 +92,7 @@ const syncTasksInSeries = new GroupTask({
     ],
 });
 const syncTasksInParallel = new GroupTask({
-    type: "parallel",
+    type: parallel,
     subTasks: [
         syncTask1,
         syncTask2,
@@ -113,7 +128,7 @@ const syncTasksInParallel = new GroupTask({
 });
 
 const asyncTasksInSeries = new GroupTask({
-    type: "series",
+    type: series,
     subTasks: [
         asyncTask1,
         asyncTask2,
@@ -148,7 +163,7 @@ const asyncTasksInSeries = new GroupTask({
     ],
 });
 const asyncTassInParallel = new GroupTask({
-    type: "parallel",
+    type: parallel,
     subTasks: [
         asyncTask1,
         asyncTask2,
