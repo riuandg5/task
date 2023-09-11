@@ -1,3 +1,13 @@
+# [1.4.0](https://github.com/riuandg5/task-execute/compare/v1.3.0...v1.4.0) (2023-09-11)
+
+### Bug Fixes
+
+-   better names, types, and interfaces ([cf8887a](https://github.com/riuandg5/task-execute/commit/cf8887ad8828860543286ad79bd0b913e090f332))
+
+### Features
+
+-   add worker and workerParams to GroupTask ([d0a68dc](https://github.com/riuandg5/task-execute/commit/d0a68dc552d7dad24b972292cbf338b1b54ca5fe))
+
 # [1.3.0](https://github.com/riuandg5/task-execute/compare/v1.2.0...v1.3.0) (2023-09-05)
 
 ### Features
