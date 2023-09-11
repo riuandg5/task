@@ -1,0 +1,19 @@
+{
+    "entryPoints": ["./src/index.ts"],
+    "readme": "none",
+    "includeVersion": true,
+    // exclude undocumented code
+    "excludeNotDocumented": true,
+    // exclude unimportant documentation
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeExternals": true,
+    // but include documentation of internals for better understanding
+    "excludeInternal": false,
+    "plugin": [
+        // group missing exports (things which are internals and not exported)
+        "typedoc-plugin-missing-exports"
+    ],
+    // name for module containing all missing exports
+    "internalModule": "Internals"
+}
